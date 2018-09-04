@@ -130,25 +130,21 @@ bool LSM6DSM::selfTest(void)
     writeRegister(CTRL5_C, 0x00); // normal mode
     delay(100); // let accel and gyro respond
 
-    Serial.println("Accel Self Test:");
-    Serial.print("+Ax results:"); Serial.print(  (accelPTest[0] - accelNom[0]) * _aRes * 1000.0); Serial.println(" mg");
-    Serial.print("-Ax results:"); Serial.println((accelNTest[0] - accelNom[0]) * _aRes * 1000.0);
-    Serial.print("+Ay results:"); Serial.println((accelPTest[1] - accelNom[1]) * _aRes * 1000.0);
-    Serial.print("-Ay results:"); Serial.println((accelNTest[1] - accelNom[1]) * _aRes * 1000.0);
-    Serial.print("+Az results:"); Serial.println((accelPTest[2] - accelNom[2]) * _aRes * 1000.0);
-    Serial.print("-Az results:"); Serial.println((accelNTest[2] - accelNom[2]) * _aRes * 1000.0);
-    Serial.println("Should be between 90 and 1700 mg");
+    Serial.println("Self Test:");
+    for (uint8_t k=0; k<3; ++k) {
+        Serial.print("+A results:"); 
+        Serial.println((accelPTest[k] - accelNom[k]) * _aRes * 1000.0); 
+        Serial.print("-A results:"); 
+        Serial.println((accelNTest[k] - accelNom[k]) * _aRes * 1000.0);
+        Serial.print("+Gx results:"); 
+        Serial.println((gyroPTest[k] - gyroNom[k]) * _gRes); 
+        Serial.print("-Gx results:"); 
+        Serial.println((gyroNTest[k] - gyroNom[k]) * _gRes);
+    }
+    Serial.println("Accel should be between 20 and 80 dps");
+    Serial.println("Gyro should be between 90 and 1700 mg");
 
-    Serial.println("Gyro Self Test:");
-    Serial.print("+Gx results:"); Serial.print((gyroPTest[0] - gyroNom[0]) * _gRes); Serial.println(" dps");
-    Serial.print("-Gx results:"); Serial.println((gyroNTest[0] - gyroNom[0]) * _gRes);
-    Serial.print("+Gy results:"); Serial.println((gyroPTest[1] - gyroNom[1]) * _gRes);
-    Serial.print("-Gy results:"); Serial.println((gyroNTest[1] - gyroNom[1]) * _gRes);
-    Serial.print("+Gz results:"); Serial.println((gyroPTest[2] - gyroNom[2]) * _gRes);
-    Serial.print("-Gz results:"); Serial.println((gyroNTest[2] - gyroNom[2]) * _gRes);
-    Serial.println("Should be between 20 and 80 dps");
-
-    return false;
+    return true;
 }
 
 void LSM6DSM::readData(int16_t * data)
