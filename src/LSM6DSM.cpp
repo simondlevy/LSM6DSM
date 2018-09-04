@@ -37,11 +37,11 @@ LSM6DSM::LSM6DSM(Ascale_t aScale, Rate_t aRate, Gscale_t gScale, Rate_t gRate)
 
 bool LSM6DSM::begin(void)
 {
-    _i2c = cpi2c_open(LSM6DSM::ADDRESS);
+    _i2c = cpi2c_open(ADDRESS);
 
     delay(100);
 
-    if (getId() != LSM6DSM::ADDRESS) {
+    if (getId() != ADDRESS) {
         return false;
     }
 
