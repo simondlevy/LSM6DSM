@@ -200,15 +200,11 @@ class LSM6DSM {
 
         uint8_t _i2c; // cross-platform support
 
-        uint8_t getId(void);
-
         void calibrate(void);
 
         uint8_t readRegister(uint8_t subAddress);
-
-        void readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest);
-
-        void writeRegister(uint8_t subAddress, uint8_t data);
+        void    readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest);
+        void    writeRegister(uint8_t subAddress, uint8_t data);
 
         void readData(int16_t data[7]);
 

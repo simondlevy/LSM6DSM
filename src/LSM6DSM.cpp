@@ -45,7 +45,7 @@ bool LSM6DSM::begin(void)
 
     delay(100);
 
-    if (getId() != ADDRESS) {
+    if (readRegister(WHO_AM_I) != ADDRESS) {
         return false;
     }
 
@@ -107,13 +107,6 @@ void LSM6DSM::writeRegister(uint8_t subAddress, uint8_t data)
 {
     cpi2c_writeRegister(_i2c, subAddress, data);
 }
-
-uint8_t LSM6DSM::getId(void)
-{
-    return readRegister(WHO_AM_I);  
-}
-
-
 
 void LSM6DSM::calibrate(void)
 {
