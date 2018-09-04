@@ -202,7 +202,7 @@ class LSM6DSM {
 
         uint8_t getId(void);
 
-        void computeBiases(void);
+        void calibrate(void);
 
         uint8_t readRegister(uint8_t subAddress);
 

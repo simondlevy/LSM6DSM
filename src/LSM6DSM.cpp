@@ -71,7 +71,7 @@ bool LSM6DSM::begin(void)
 
     delay(100);
 
-    computeBiases();
+    calibrate();
 
     return true;
 }
@@ -115,7 +115,7 @@ uint8_t LSM6DSM::getId(void)
 
 
 
-void LSM6DSM::computeBiases(void)
+void LSM6DSM::calibrate(void)
 {
     int16_t temp[7] = {0, 0, 0, 0, 0, 0, 0};
     int32_t sum[7] = {0, 0, 0, 0, 0, 0, 0};
