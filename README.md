@@ -1,5 +1,5 @@
 This repository contains Arduino, Raspberry Pi (WiringPi), and Linux i2cdev
-libraries and examples for working with the Invensense LSM6DSM Intertial Measurement Unit.
+libraries and examples for working with the STMicroelectronics LSM6DSM Intertial Measurement Unit.
 The class library and examples were adapted from Kris Winer's
 [repository](https://github.com/kriswiner/LSM6DSM_LIS2MDL_LPS22HB).
 
