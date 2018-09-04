@@ -39,6 +39,10 @@ bool LSM6DSM::begin(void)
 {
     _i2c = cpi2c_open(ADDRESS);
 
+    if (_i2c <= 0) {
+        return false;
+    }
+
     delay(100);
 
     if (getId() != ADDRESS) {
