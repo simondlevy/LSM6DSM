@@ -17,7 +17,7 @@ extern "C" { void delay(uint32_t msec); }
 void delay(uint32_t msec);
 #endif
 
-class LSM6DSM {
+class NewLSM6DSM {
 
     public:
 
@@ -62,7 +62,7 @@ class LSM6DSM {
 
         } Error_t;
 
-        LSM6DSM(Ascale_t aScale, Rate_t aRate, Gscale_t gScale, Rate_t gRate);
+        NewLSM6DSM(Ascale_t aScale, Rate_t aRate, Gscale_t gScale, Rate_t gRate);
 
         Error_t begin(void);
 

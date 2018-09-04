@@ -1,8 +1,8 @@
-#include "LSM6DSM.h"
+#include "NewLSM6DSM.h"
 
 #include <CrossPlatformI2C_Core.h>
 
-LSM6DSM::LSM6DSM(Ascale_t aScale, Rate_t aRate, Gscale_t gScale, Rate_t gRate)
+NewLSM6DSM::NewLSM6DSM(Ascale_t aScale, Rate_t aRate, Gscale_t gScale, Rate_t gRate)
 {
     _aRes = getAres(aScale);
     _gRes = getGres(gScale);
@@ -13,13 +13,13 @@ LSM6DSM::LSM6DSM(Ascale_t aScale, Rate_t aRate, Gscale_t gScale, Rate_t gRate)
     _gRate  = gRate;
 }
 
-LSM6DSM::Error_t LSM6DSM::begin(void)
+NewLSM6DSM::Error_t NewLSM6DSM::begin(void)
 {
-    _i2c = cpi2c_open(LSM6DSM::ADDRESS);
+    _i2c = cpi2c_open(NewLSM6DSM::ADDRESS);
 
     delay(100);
 
-    if (getId() != LSM6DSM::ADDRESS) {
+    if (getId() != NewLSM6DSM::ADDRESS) {
         return ERROR_ID;
     }
 
@@ -49,10 +49,10 @@ LSM6DSM::Error_t LSM6DSM::begin(void)
         return ERROR_SELFTEST;
     }
 
-    return LSM6DSM::ERROR_NONE;
+    return NewLSM6DSM::ERROR_NONE;
 }
 
-void LSM6DSM::readData(float & ax, float & ay, float & az, float & gx, float & gy, float & gz)
+void NewLSM6DSM::readData(float & ax, float & ay, float & az, float & gx, float & gy, float & gz)
 {
     ax = 0;
     ay = 0;
@@ -63,29 +63,29 @@ void LSM6DSM::readData(float & ax, float & ay, float & az, float & gx, float & g
     gz = 0;
 }
 
-uint8_t LSM6DSM::readRegister(uint8_t subAddress)
+uint8_t NewLSM6DSM::readRegister(uint8_t subAddress)
 {
     uint8_t data=0;
     readRegisters(subAddress, 1, &data);
     return data;
 }
 
-void LSM6DSM::readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest)
+void NewLSM6DSM::readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest)
 {
     cpi2c_readRegisters(_i2c, subAddress, count, dest);
 }
 
-void LSM6DSM::writeRegister(uint8_t subAddress, uint8_t data)
+void NewLSM6DSM::writeRegister(uint8_t subAddress, uint8_t data)
 {
     cpi2c_writeRegister(_i2c, subAddress, data);
 }
 
-uint8_t LSM6DSM::getId(void)
+uint8_t NewLSM6DSM::getId(void)
 {
     return readRegister(WHO_AM_I);  
 }
 
-bool LSM6DSM::selfTest(void)
+bool NewLSM6DSM::selfTest(void)
 {
     int16_t temp[7] = {0, 0, 0, 0, 0, 0, 0};
     int16_t accelPTest[3] = {0, 0, 0}, accelNTest[3] = {0, 0, 0}, gyroPTest[3] = {0, 0, 0}, gyroNTest[3] = {0, 0, 0};
@@ -147,7 +147,7 @@ bool LSM6DSM::selfTest(void)
     return true;
 }
 
-void LSM6DSM::readData(int16_t * data)
+void NewLSM6DSM::readData(int16_t * data)
 {
     uint8_t rawData[14];  // x/y/z accel register data stored here
     readRegisters(OUT_TEMP_L, 14, rawData);  // Read the 14 raw data registers into data array
@@ -160,7 +160,7 @@ void LSM6DSM::readData(int16_t * data)
     data[6] = ((int16_t)rawData[13] << 8) | rawData[12] ; 
 }
 
-float LSM6DSM::getAres(Ascale_t ascale) 
+float NewLSM6DSM::getAres(Ascale_t ascale) 
 {
     switch (ascale) {
         // Possible accelerometer scales (and their register bit settings) are:
@@ -183,7 +183,7 @@ float LSM6DSM::getAres(Ascale_t ascale)
     return 0;
 }
 
-float LSM6DSM::getGres(Gscale_t gscale) 
+float NewLSM6DSM::getGres(Gscale_t gscale) 
 {
     switch (gscale)  {
 
