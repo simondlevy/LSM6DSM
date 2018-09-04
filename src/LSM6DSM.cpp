@@ -1,3 +1,25 @@
+/* 
+   LSM6DSM.cpp: Implementation of LSM6DSM class
+
+   Copyright (C) 2018 Simon D. Levy
+
+   Adapted from https://github.com/kriswiner/LSM6DSM_LIS2MDL_LPS22HB
+
+   This file is part of LSM6DSM.
+
+   LSM6DSM is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   LSM6DSM is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   You should have received a copy of the GNU General Public License
+   along with LSM6DSM.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "LSM6DSM.h"
 
 #include <CrossPlatformI2C_Core.h>
