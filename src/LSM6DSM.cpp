@@ -17,7 +17,11 @@ LSM6DSM::Error_t LSM6DSM::begin(void)
     delay(100);
 
     if (getId() != LSM6DSM::ADDRESS) {
-        return LSM6DSM::ERROR_ID;
+        return ERROR_ID;
+    }
+
+    if (!selfTest()) {
+        return ERROR_SELFTEST;
     }
 
     return LSM6DSM::ERROR_NONE;
@@ -44,4 +48,9 @@ uint8_t LSM6DSM::readRegister(uint8_t subAddress)
 uint8_t LSM6DSM::getId(void)
 {
     return readRegister(LSM6DSM::WHO_AM_I);  
+}
+
+bool LSM6DSM::selfTest(void)
+{
+    return false;
 }

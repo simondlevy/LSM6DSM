@@ -182,6 +182,8 @@ class LSM6DSM {
 
         uint8_t getId(void);
 
+        bool selfTest(void);
+
         uint8_t readRegister(uint8_t subAddress);
 
 }; // class LSM6DSM
