@@ -2,6 +2,21 @@
 
 #include <stdint.h>
 
+// One ifdef needed to support delay() cross-platform
+#if defined(ARDUINO)
+#include <Arduino.h>
+
+#elif defined(__arm__) 
+#if defined(STM32F303)  || defined(STM32F405xx)
+extern "C" { void delay(uint32_t msec); }
+#else
+#include <wiringPi.h>
+#endif
+
+#else
+void delay(uint32_t msec);
+#endif
+
 class LSM6DSM {
 
     public:
@@ -26,18 +41,18 @@ class LSM6DSM {
 
         typedef enum {
 
-            GODR_12_5Hz = 1,
-            GODR_26Hz,   
-            GODR_52Hz,   
-            GODR_104Hz,  
-            GODR_208Hz,  
-            GODR_416Hz,  
-            GODR_833Hz,  
-            GODR_1660Hz, 
-            GODR_3330Hz, 
-            GODR_6660Hz 
+            ODR_12_5Hz = 1,
+            ODR_26Hz,   
+            ODR_52Hz,   
+            ODR_104Hz,  
+            ODR_208Hz,  
+            ODR_416Hz,  
+            ODR_833Hz,  
+            ODR_1660Hz, 
+            ODR_3330Hz, 
+            ODR_6660Hz 
 
-        } Grate_t;
+        } Rate_t;
 
         typedef enum {
 
@@ -47,7 +62,7 @@ class LSM6DSM {
 
         } Error_t;
 
-        LSM6DSM(Ascale_t ascale, Gscale_t gscale, Grate_t grate);
+        LSM6DSM(Ascale_t ascale, Rate_t arate, Gscale_t gscale, Rate_t grate);
 
         Error_t begin(void);
 
@@ -158,5 +173,15 @@ class LSM6DSM {
         static const uint8_t Y_OFS_USR                 = 0x74;
         static const uint8_t Z_OFS_USR                 = 0x75;
 
+        Ascale_t _ascale;
+        Rate_t   _arate;
+        Gscale_t _gscale;
+        Rate_t   _grate;
+
+        uint8_t _i2c; // cross-platform support
+
+        uint8_t getId(void);
+
+        uint8_t readRegister(uint8_t subAddress);
 
 }; // class LSM6DSM
