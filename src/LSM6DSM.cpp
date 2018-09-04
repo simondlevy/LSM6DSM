@@ -1,8 +1,8 @@
-#include "NewLSM6DSM.h"
+#include "LSM6DSM.h"
 
 #include <CrossPlatformI2C_Core.h>
 
-NewLSM6DSM::NewLSM6DSM(Ascale_t aScale, Rate_t aRate, Gscale_t gScale, Rate_t gRate)
+LSM6DSM::LSM6DSM(Ascale_t aScale, Rate_t aRate, Gscale_t gScale, Rate_t gRate)
 {
     _aRes = getAres(aScale);
     _gRes = getGres(gScale);
@@ -13,14 +13,14 @@ NewLSM6DSM::NewLSM6DSM(Ascale_t aScale, Rate_t aRate, Gscale_t gScale, Rate_t gR
     _gRate  = gRate;
 }
 
-NewLSM6DSM::Error_t NewLSM6DSM::begin(void)
+bool LSM6DSM::begin(void)
 {
-    _i2c = cpi2c_open(NewLSM6DSM::ADDRESS);
+    _i2c = cpi2c_open(LSM6DSM::ADDRESS);
 
     delay(100);
 
-    if (getId() != NewLSM6DSM::ADDRESS) {
-        return ERROR_ID;
+    if (getId() != LSM6DSM::ADDRESS) {
+        return false;
     }
 
     // reset device
@@ -45,109 +45,83 @@ NewLSM6DSM::Error_t NewLSM6DSM::begin(void)
 
     delay(100);
 
-    if (!selfTest()) {
-        return ERROR_SELFTEST;
-    }
+    computeBiases();
 
-    return NewLSM6DSM::ERROR_NONE;
+    return true;
 }
 
-void NewLSM6DSM::readData(float & ax, float & ay, float & az, float & gx, float & gy, float & gz)
+void LSM6DSM::readData(float & ax, float & ay, float & az, float & gx, float & gy, float & gz)
 {
-    ax = 0;
-    ay = 0;
-    az = 0;
+    int16_t data[7];
 
-    gx = 0;
-    gy = 0;
-    gz = 0;
+    readData(data);
+
+    ax = (float)data[4]*_aRes - _accelBias[0]; 
+    ay = (float)data[5]*_aRes - _accelBias[1];   
+    az = (float)data[6]*_aRes - _accelBias[2];  
+
+    gx = (float)data[1]*_gRes - _gyroBias[0];  
+    gy = (float)data[2]*_gRes - _gyroBias[1];  
+    gz = (float)data[3]*_gRes - _gyroBias[2]; 
 }
 
-uint8_t NewLSM6DSM::readRegister(uint8_t subAddress)
+uint8_t LSM6DSM::readRegister(uint8_t subAddress)
 {
     uint8_t data=0;
     readRegisters(subAddress, 1, &data);
     return data;
 }
 
-void NewLSM6DSM::readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest)
+void LSM6DSM::readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest)
 {
     cpi2c_readRegisters(_i2c, subAddress, count, dest);
 }
 
-void NewLSM6DSM::writeRegister(uint8_t subAddress, uint8_t data)
+void LSM6DSM::writeRegister(uint8_t subAddress, uint8_t data)
 {
     cpi2c_writeRegister(_i2c, subAddress, data);
 }
 
-uint8_t NewLSM6DSM::getId(void)
+uint8_t LSM6DSM::getId(void)
 {
     return readRegister(WHO_AM_I);  
 }
 
-bool NewLSM6DSM::selfTest(void)
+
+
+void LSM6DSM::computeBiases(void)
 {
     int16_t temp[7] = {0, 0, 0, 0, 0, 0, 0};
-    int16_t accelPTest[3] = {0, 0, 0}, accelNTest[3] = {0, 0, 0}, gyroPTest[3] = {0, 0, 0}, gyroNTest[3] = {0, 0, 0};
-    int16_t accelNom[3] = {0, 0, 0}, gyroNom[3] = {0, 0, 0};
+    int32_t sum[7] = {0, 0, 0, 0, 0, 0, 0};
 
-    readData(temp);
-    accelNom[0] = temp[4];
-    accelNom[1] = temp[5];
-    accelNom[2] = temp[6];
-    gyroNom[0]  = temp[1];
-    gyroNom[1]  = temp[2];
-    gyroNom[2]  = temp[3];
-
-    writeRegister(CTRL5_C, 0x01); // positive accel self test
-    delay(100); // let accel respond
-    readData(temp);
-    accelPTest[0] = temp[4];
-    accelPTest[1] = temp[5];
-    accelPTest[2] = temp[6];
-
-    writeRegister(CTRL5_C, 0x03); // negative accel self test
-    delay(100); // let accel respond
-    readData(temp);
-    accelNTest[0] = temp[4];
-    accelNTest[1] = temp[5];
-    accelNTest[2] = temp[6];
-
-    writeRegister(CTRL5_C, 0x04); // positive gyro self test
-    delay(100); // let gyro respond
-    readData(temp);
-    gyroPTest[0] = temp[1];
-    gyroPTest[1] = temp[2];
-    gyroPTest[2] = temp[3];
-
-    writeRegister(CTRL5_C, 0x0C); // negative gyro self test
-    delay(100); // let gyro respond
-    readData(temp);
-    gyroNTest[0] = temp[1];
-    gyroNTest[1] = temp[2];
-    gyroNTest[2] = temp[3];
-
-    writeRegister(CTRL5_C, 0x00); // normal mode
-    delay(100); // let accel and gyro respond
-
-    Serial.println("Self Test:");
-    for (uint8_t k=0; k<3; ++k) {
-        Serial.print("+A results:"); 
-        Serial.println((accelPTest[k] - accelNom[k]) * _aRes * 1000.0); 
-        Serial.print("-A results:"); 
-        Serial.println((accelNTest[k] - accelNom[k]) * _aRes * 1000.0);
-        Serial.print("+Gx results:"); 
-        Serial.println((gyroPTest[k] - gyroNom[k]) * _gRes); 
-        Serial.print("-Gx results:"); 
-        Serial.println((gyroNTest[k] - gyroNom[k]) * _gRes);
+    for (int k = 0; k < 128; ++k) {
+        readData(temp);
+        sum[1] += temp[1];
+        sum[2] += temp[2];
+        sum[3] += temp[3];
+        sum[4] += temp[4];
+        sum[5] += temp[5];
+        sum[6] += temp[6];
+        delay(50);
     }
-    Serial.println("Accel should be between 20 and 80 dps");
-    Serial.println("Gyro should be between 90 and 1700 mg");
 
-    return true;
+    _gyroBias[0] = sum[1]*_gRes/128.0f;
+    _gyroBias[1] = sum[2]*_gRes/128.0f;
+    _gyroBias[2] = sum[3]*_gRes/128.0f;
+    _accelBias[0] = sum[4]*_aRes/128.0f;
+    _accelBias[1] = sum[5]*_aRes/128.0f;
+    _accelBias[2] = sum[6]*_aRes/128.0f;
+
+    if(_accelBias[0] > 0.8f)  {_accelBias[0] -= 1.0f;}  // Remove gravity from the x-axis accelerometer bias calculation
+    if(_accelBias[0] < -0.8f) {_accelBias[0] += 1.0f;}  // Remove gravity from the x-axis accelerometer bias calculation
+    if(_accelBias[1] > 0.8f)  {_accelBias[1] -= 1.0f;}  // Remove gravity from the y-axis accelerometer bias calculation
+    if(_accelBias[1] < -0.8f) {_accelBias[1] += 1.0f;}  // Remove gravity from the y-axis accelerometer bias calculation
+    if(_accelBias[2] > 0.8f)  {_accelBias[2] -= 1.0f;}  // Remove gravity from the z-axis accelerometer bias calculation
+    if(_accelBias[2] < -0.8f) {_accelBias[2] += 1.0f;}  // Remove gravity from the z-axis accelerometer bias calculation
+
 }
 
-void NewLSM6DSM::readData(int16_t * data)
+void LSM6DSM::readData(int16_t * data)
 {
     uint8_t rawData[14];  // x/y/z accel register data stored here
     readRegisters(OUT_TEMP_L, 14, rawData);  // Read the 14 raw data registers into data array
@@ -160,7 +134,7 @@ void NewLSM6DSM::readData(int16_t * data)
     data[6] = ((int16_t)rawData[13] << 8) | rawData[12] ; 
 }
 
-float NewLSM6DSM::getAres(Ascale_t ascale) 
+float LSM6DSM::getAres(Ascale_t ascale) 
 {
     switch (ascale) {
         // Possible accelerometer scales (and their register bit settings) are:
@@ -183,7 +157,7 @@ float NewLSM6DSM::getAres(Ascale_t ascale)
     return 0;
 }
 
-float NewLSM6DSM::getGres(Gscale_t gscale) 
+float LSM6DSM::getGres(Gscale_t gscale) 
 {
     switch (gscale)  {
 

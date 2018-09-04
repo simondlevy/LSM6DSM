@@ -17,7 +17,7 @@ extern "C" { void delay(uint32_t msec); }
 void delay(uint32_t msec);
 #endif
 
-class NewLSM6DSM {
+class LSM6DSM {
 
     public:
 
@@ -54,17 +54,9 @@ class NewLSM6DSM {
 
         } Rate_t;
 
-        typedef enum {
+        LSM6DSM(Ascale_t aScale, Rate_t aRate, Gscale_t gScale, Rate_t gRate);
 
-            ERROR_NONE,
-            ERROR_ID,
-            ERROR_SELFTEST
-
-        } Error_t;
-
-        NewLSM6DSM(Ascale_t aScale, Rate_t aRate, Gscale_t gScale, Rate_t gRate);
-
-        Error_t begin(void);
+        bool begin(void);
 
         void readData(float & ax, float & ay, float & az, float & gx, float & gy, float & gz);
 
@@ -181,11 +173,14 @@ class NewLSM6DSM {
         float   _aRes;
         float   _gRes;
 
+        float _gyroBias[3];
+        float _accelBias[3];
+
         uint8_t _i2c; // cross-platform support
 
         uint8_t getId(void);
 
-        bool selfTest(void);
+        void computeBiases(void);
 
         uint8_t readRegister(uint8_t subAddress);
 
