@@ -62,7 +62,7 @@ class LSM6DSM {
 
         } Error_t;
 
-        LSM6DSM(Ascale_t ascale, Rate_t arate, Gscale_t gscale, Rate_t grate);
+        LSM6DSM(Ascale_t aScale, Rate_t aRate, Gscale_t gScale, Rate_t gRate);
 
         Error_t begin(void);
 
@@ -173,10 +173,13 @@ class LSM6DSM {
         static const uint8_t Y_OFS_USR                 = 0x74;
         static const uint8_t Z_OFS_USR                 = 0x75;
 
-        Ascale_t _ascale;
-        Rate_t   _arate;
-        Gscale_t _gscale;
-        Rate_t   _grate;
+        Ascale_t _aScale;
+        Rate_t   _aRate;
+        Gscale_t _gScale;
+        Rate_t   _gRate;
+
+        float   _aRes;
+        float   _gRes;
 
         uint8_t _i2c; // cross-platform support
 
@@ -185,5 +188,14 @@ class LSM6DSM {
         bool selfTest(void);
 
         uint8_t readRegister(uint8_t subAddress);
+
+        void readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest);
+
+        void writeRegister(uint8_t subAddress, uint8_t data);
+
+        void readData(int16_t data[7]);
+
+        static float getAres(Ascale_t ascale);
+        static float getGres(Gscale_t gscale);
 
 }; // class LSM6DSM
