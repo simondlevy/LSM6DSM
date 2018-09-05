@@ -76,6 +76,12 @@ bool LSM6DSM::begin(void)
     return true;
 }
 
+bool LSM6DSM::checkNewData(void)
+{
+    // use the gyro bit to check new data
+    return (bool)(readRegister(STATUS_REG)  & 0x02);   
+}
+
 void LSM6DSM::readData(float & ax, float & ay, float & az, float & gx, float & gy, float & gz)
 {
     int16_t data[7];

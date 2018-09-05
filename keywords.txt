@@ -1,5 +1,6 @@
 LSM6DSM	KEYWORD1
 begin	KEYWORD2
+checkNewData	KEYWORD2
 readData    KEYWORD2
 Ascale_t	KEYWORD2
 Gscale_t	KEYWORD2
