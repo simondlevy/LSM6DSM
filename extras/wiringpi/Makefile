@@ -1,5 +1,5 @@
 # 
-# Makefile for LSM6DM WiringPi example
+# Makefile for LSM6DSM WiringPi example
 #
 # Copyright (c) 2018 Simon D. Levy
 #
