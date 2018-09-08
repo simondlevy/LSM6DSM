@@ -91,9 +91,9 @@ void loop()
 
         Serial.println();
 
-        reportGyroRate("X", ax);
-        reportGyroRate("Y", ay);
-        reportGyroRate("Z", az);
+        reportGyroRate("X", gx);
+        reportGyroRate("Y", gy);
+        reportGyroRate("Z", gz);
 
         Serial.println("\n");
 
