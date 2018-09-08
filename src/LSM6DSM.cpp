@@ -35,9 +35,9 @@ LSM6DSM::LSM6DSM(Ascale_t aScale, Rate_t aRate, Gscale_t gScale, Rate_t gRate)
     _gRate  = gRate;
 }
 
-bool LSM6DSM::begin(void)
+bool LSM6DSM::begin(uint8_t bus)
 {
-    _i2c = cpi2c_open(ADDRESS);
+    _i2c = cpi2c_open(ADDRESS, bus);
 
     if (_i2c <= 0) {
         return false;

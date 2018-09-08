@@ -31,6 +31,7 @@
 #elif defined(__arm__) 
 #if defined(STM32F303)  || defined(STM32F405xx)
 extern "C" { void delay(uint32_t msec); }
+}
 #else
 #include <wiringPi.h>
 #endif
@@ -78,7 +79,7 @@ class LSM6DSM {
 
         LSM6DSM(Ascale_t aScale, Rate_t aRate, Gscale_t gScale, Rate_t gRate);
 
-        bool begin(void);
+        bool begin(uint8_t bus=1);
 
         bool checkNewData(void);
 

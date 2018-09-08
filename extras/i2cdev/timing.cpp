@@ -1,5 +1,7 @@
 /* 
-   main.pp: Generic main() for caling Arduino-style setup(), loop()
+   timing.cpp: Arduino-style delay(), micros() for Linux
+
+   Also provides delay(), micros() routines
 
    Copyright (c) 2018 Simon D. Levy
 
@@ -18,23 +20,24 @@
    along with LSM6DSM.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
 
-extern void setup(), loop();
-
-void error(const char * errmsg) 
+void delay(unsigned int msec)
 {
-    fprintf(stderr, "%s\n", errmsg);
-    exit(1);
+    usleep(msec*1000);
 }
 
-
-int main(int argc, char ** argv)
+unsigned int millis(void)
 {
-    setup();
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return 1000*ts.tv_sec + ts.tv_nsec/1000000;
+}
 
-    while (true) {
-        loop();
-    }
+unsigned int micros(void)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return 1000000*ts.tv_sec + ts.tv_nsec/1000;
 }

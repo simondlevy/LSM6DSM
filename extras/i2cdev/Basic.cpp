@@ -20,11 +20,13 @@
 
 #include "LSM6DSM.h"
 
-#include <wiringPi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+
+// in timing.cpp
+uint32_t millis(void);
 
 // params
 static const  LSM6DSM::Ascale_t ASCALE = LSM6DSM::AFS_2G;
@@ -46,15 +48,7 @@ static void reportGyroRate(const char * dim, float val)
 
 void setup()
 {
-    // Set up the wiringPi library
-    if (wiringPiSetup () < 0) {
-        fprintf (stderr, "Unable to setup wiringPi: %s\n", strerror (errno));
-        exit(1);
-    }
-
-    delay(100);
-
-    if (!lsm6dsm.begin()) {
+    if (!lsm6dsm.begin(0)) {
         while (true) {
             printf("Unable to connect to LSM6DSM\n");
         }
