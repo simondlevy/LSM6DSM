@@ -23,10 +23,12 @@ CPDB = $(HOME)/CrossPlatformDataBus
 
 ALL = Basic
 
-LSM6DSMSRC = ../../src
+LSMSRC = ../../src
 
-I2CINC = $(CPDB)/src
-I2CSRC = $(CPDB)/extras/i2c/wiringpi/src
+CPSRC  = $(CPDB)/src
+CPEXT  = $(CPDB)/extras
+CPCMN  = $(CPEXT)/common
+I2CSRC = $(CPEXT)/i2c/wiringpi/src
 
 all: $(ALL)
 
@@ -34,16 +36,16 @@ Basic: Basic.o LSM6DSM.o WiringPiI2C.o main.o
 	g++ -std=c++11 -o Basic Basic.o LSM6DSM.o WiringPiI2C.o main.o -lwiringPi
 
 Basic.o: Basic.cpp 
-	g++ -std=c++11 -Wall -I$(I2CINC) -I$(LSM6DSMSRC) -c Basic.cpp
+	g++ -std=c++11 -Wall -I$(I2CSRC) -I$(LSMSRC) -c Basic.cpp
 
-LSM6DSM.o:  $(LSM6DSMSRC)/LSM6DSM.cpp  $(LSM6DSMSRC)/LSM6DSM.h
-	g++ -std=c++11 -Wall -I$(I2CINC) -I$(LSM6DSMSRC) -c $(LSM6DSMSRC)/LSM6DSM.cpp
+LSM6DSM.o:  $(LSMSRC)/LSM6DSM.cpp  $(LSMSRC)/LSM6DSM.h
+	g++ -std=c++11 -Wall -I$(CPSRC) -I$(LSMSRC) -c $(LSMSRC)/LSM6DSM.cpp
 
 WiringPiI2C.o: $(I2CSRC)/WiringPiI2C.cpp 
-	g++ -std=c++11 -Wall -I$(I2CINC) -c $(I2CSRC)/WiringPiI2C.cpp
+	g++ -std=c++11 -Wall -I$(CPSRC) -c $(I2CSRC)/WiringPiI2C.cpp
 
-main.o: ../main.cpp 
-	g++ -std=c++11 -Wall -c ../main.cpp
+main.o: $(CPCMN)/main.cpp 
+	g++ -std=c++11 -Wall -c $(CPCMN)/main.cpp
 
 run: Basic
 	./Basic
