@@ -32,11 +32,11 @@ I2CSRC = $(CPEXT)/i2c/wiringpi/src
 
 all: $(ALL)
 
-Basic: Basic.o LSM6DSM.o WiringPiI2C.o main.o
-	g++ -std=c++11 -o Basic Basic.o LSM6DSM.o WiringPiI2C.o main.o -lwiringPi
+Basic: Basic.o LSM6DSM.o WiringPiI2C.o main.o errmsg.o
+	g++ -std=c++11 -o Basic Basic.o LSM6DSM.o WiringPiI2C.o main.o errmsg.o -lwiringPi
 
 Basic.o: Basic.cpp 
-	g++ -std=c++11 -Wall -I$(I2CSRC) -I$(LSMSRC) -c Basic.cpp
+	g++ -std=c++11 -Wall -I$(CPCMN) -I$(LSMSRC) -c Basic.cpp
 
 LSM6DSM.o:  $(LSMSRC)/LSM6DSM.cpp  $(LSMSRC)/LSM6DSM.h
 	g++ -std=c++11 -Wall -I$(CPSRC) -I$(LSMSRC) -c $(LSMSRC)/LSM6DSM.cpp
@@ -46,6 +46,9 @@ WiringPiI2C.o: $(I2CSRC)/WiringPiI2C.cpp
 
 main.o: $(CPCMN)/main.cpp 
 	g++ -std=c++11 -Wall -c $(CPCMN)/main.cpp
+
+errmsg.o: $(CPCMN)/errmsg.cpp 
+	g++ -std=c++11 -Wall -I$(CPCMN) -c $(CPCMN)/errmsg.cpp
 
 run: Basic
 	./Basic

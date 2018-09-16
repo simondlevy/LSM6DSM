@@ -95,6 +95,8 @@ class LSM6DSM
 
         void calibrate(void);
 
+        bool checkNewData(void);
+
         void readData(float & ax, float & ay, float & az, float & gx, float & gy, float & gz);
 
     private:

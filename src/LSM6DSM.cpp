@@ -23,8 +23,6 @@
 
 #include "LSM6DSM.h"
 
-#include <Arduino.h>
-#include <Wire.h>
 #include <CrossPlatformI2C_Core.h>
 
 #include <math.h>
@@ -84,6 +82,12 @@ LSM6DSM::Error_t LSM6DSM::begin(void)
     writeRegister(INT2_CTRL, 0x40);      // enable significant motion interrupts on INT2  
 
     return selfTest() ? ERROR_NONE : ERROR_SELFTEST;
+}
+
+bool LSM6DSM::checkNewData(void)
+{
+    // use the gyro bit to check new data
+    return (bool)(readRegister(STATUS_REG)  & 0x02);   
 }
 
 void LSM6DSM::readData(float & ax, float & ay, float & az, float & gx, float & gy, float & gz)
