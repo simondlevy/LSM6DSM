@@ -20,21 +20,34 @@
 
 #include "LSM6DSM.h"
 
-#ifdef __MK20DX256__
-#include <i2c_t3.h>
-#define NOSTOP I2C_NOSTOP
-#else
+#include <Arduino.h>
 #include <Wire.h>
-#define NOSTOP false
-#endif
 
-// params
-static const  LSM6DSM::Ascale_t ASCALE = LSM6DSM::AFS_2G;
-static const  LSM6DSM::Gscale_t GSCALE = LSM6DSM::GFS_250DPS;
-static const  LSM6DSM::Rate_t   RATE   = LSM6DSM::ODR_208Hz;
+// Parameter settings
+static LSM6DSM::Ascale_t Ascale = LSM6DSM::AFS_2G;
+static LSM6DSM::Gscale_t Gscale = LSM6DSM::GFS_245DPS;
+static LSM6DSM::Rate_t   AODR   = LSM6DSM::ODR_833Hz;
+static LSM6DSM::Rate_t   GODR   = LSM6DSM::ODR_833Hz;
 
-// Instantiate LSM6DSM class
-static LSM6DSM lsm6dsm(ASCALE, RATE, GSCALE, RATE);
+static uint8_t myLed = 38;
+static uint8_t LSM6DSM_intPin1 = 2;  
+
+static bool newLSM6DSMData;
+
+static LSM6DSM lsm6dsm(Ascale, Gscale, AODR, GODR);
+
+static void myinthandler1()
+{
+    newLSM6DSMData = true;
+}
+
+static void error(const char * msg)
+{
+    while (true) {
+        Serial.print("Error: ");
+        Serial.println(msg);
+    }
+}
 
 static void reportAcceleration(const char * dim, float val)
 {
@@ -52,38 +65,63 @@ static void reportGyroRate(const char * dim, float val)
     Serial.print(" degrees/sec "); 
 }
 
-void setup()
-{
+void setup() {
+
+    // put your setup code here, to run once:
     Serial.begin(115200);
+    delay(1000);
 
-#ifdef __MK20DX256__
-    Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_INT, I2C_RATE_400);
-#else
-    Wire.begin();
-#endif
+    // Configure led
+    pinMode(myLed, OUTPUT);
+    digitalWrite(myLed, HIGH); // start with led off
 
-    delay(100);
+    pinMode(LSM6DSM_intPin1, INPUT);
 
-    if (!lsm6dsm.begin()) {
-        while (true) {
-            Serial.println("Unable to connect to LSM6DSM");
-        }
+    Wire.begin(TWI_PINS_20_21); // set master mode 
+    Wire.setClock(400000); // I2C frequency at 400 kHz  
+    delay(1000);
+
+    switch (lsm6dsm.begin()) {
+
+        case LSM6DSM::ERROR_CONNECT:
+            error("no connection");
+            break;
+
+        case LSM6DSM::ERROR_ID:
+            error("bad ID");
+            break;
+
+        case LSM6DSM::ERROR_SELFTEST:
+            //error("failed self-test");
+            break;
+
+         case LSM6DSM::ERROR_NONE:
+            break;
+
     }
+
+    // Un-comment these lines to calibrate the IMU
+    //Serial.println("Calculate accel and gyro offset biases: keep sensor flat and motionless!");
+    //delay(4000);
+    //lsm6dsm.calibrate();
+
+    attachInterrupt(LSM6DSM_intPin1, myinthandler1, RISING);  // define interrupt for intPin2 output of LSM6DSM
+
+    // Turn on the LED
+    digitalWrite(myLed, LOW);
+
 }
 
-void loop()
-{  
-    static uint32_t millisPrev;
-    static float ax, ay, az;
-    static float gx, gy, gz;
+void loop() 
+{
+    // If intPin goes high, either all data registers have new data
+    if(newLSM6DSMData) {   // On interrupt, read data
 
-    // If data ready bit set, all data registers have new data
-    if (lsm6dsm.checkNewData()) {  // check if data ready interrupt
+        newLSM6DSMData = false;     // reset newData flag
+
+        float ax=0, ay=0, az=0, gx=0, gy=0, gz=0;
+
         lsm6dsm.readData(ax, ay, az, gx, gy, gz);
-    }  
-
-    // Report data periodically
-    if ((millis() - millisPrev) > 100) {
 
         reportAcceleration("X", ax);
         reportAcceleration("Y", ay);
@@ -96,7 +134,7 @@ void loop()
         reportGyroRate("Z", gz);
 
         Serial.println("\n");
-
-        millisPrev = millis();
     }
 }
+
+
