@@ -23,30 +23,35 @@ CPDB = $(HOME)/CrossPlatformDataBus
 
 ALL = Basic
 
-LSM6DSMSRC = ../../src
+LSMSRC = ../../src
 
-I2CINC = $(CPDB)/src
-I2CSRC = $(CPDB)/extras/i2c/i2cdev/src
+CPSRC  = $(CPDB)/src
+CPEXT  = $(CPDB)/extras
+CPCMN  = $(CPEXT)/common
+I2CSRC = $(CPEXT)/i2c/i2cdev/src
 
 all: $(ALL)
 
-Basic: Basic.o LSM6DSM.o I2CDevI2C.o main.o timing.o
-	g++ -std=c++11 -o Basic Basic.o LSM6DSM.o I2CDevI2C.o main.o timing.o
+Basic: Basic.o LSM6DSM.o I2CDevI2C.o main.o errmsg.o timing.o
+	g++ -std=c++11 -o Basic Basic.o LSM6DSM.o I2CDevI2C.o main.o errmsg.o timing.o
 
 Basic.o: Basic.cpp 
-	g++ -std=c++11 -Wall -I$(I2CINC) -I$(LSM6DSMSRC) -c Basic.cpp
+	g++ -std=c++11 -Wall -I$(CPCMN) -I$(LSMSRC) -c Basic.cpp
 
-LSM6DSM.o:  $(LSM6DSMSRC)/LSM6DSM.cpp  $(LSM6DSMSRC)/LSM6DSM.h
-	g++ -std=c++11 -Wall -I$(I2CINC) -I$(LSM6DSMSRC) -c $(LSM6DSMSRC)/LSM6DSM.cpp
+LSM6DSM.o:  $(LSMSRC)/LSM6DSM.cpp  $(LSMSRC)/LSM6DSM.h
+	g++ -std=c++11 -Wall -I$(CPSRC) -I$(LSMSRC) -c $(LSMSRC)/LSM6DSM.cpp
 
 I2CDevI2C.o: $(I2CSRC)/I2CDevI2C.cpp 
-	g++ -std=c++11 -Wall -I$(I2CINC) -c $(I2CSRC)/I2CDevI2C.cpp
+	g++ -std=c++11 -Wall -I$(CPSRC) -c $(I2CSRC)/I2CDevI2C.cpp
 
-main.o: ../main.cpp 
-	g++ -std=c++11 -Wall -c ../main.cpp
+main.o: $(CPCMN)/main.cpp 
+	g++ -std=c++11 -Wall -c $(CPCMN)/main.cpp
 
-timing.o: timing.cpp 
-	g++ -std=c++11 -Wall -c timing.cpp
+errmsg.o: $(CPCMN)/errmsg.cpp 
+	g++ -std=c++11 -Wall -I$(CPCMN) -c $(CPCMN)/errmsg.cpp
+
+timing.o: $(CPCMN)/timing.cpp 
+	g++ -std=c++11 -Wall -I$(CPCMN) -c $(CPCMN)/timing.cpp
 
 run: Basic
 	./Basic

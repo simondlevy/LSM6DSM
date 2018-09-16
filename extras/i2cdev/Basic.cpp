@@ -25,17 +25,17 @@
 #include <string.h>
 #include <errno.h>
 
-// in timing.cpp
-uint32_t millis(void);
+#include <errmsg.h>
+#include <timing.h>
 
 // params
 static const  LSM6DSM::Ascale_t ASCALE = LSM6DSM::AFS_2G;
-static const  LSM6DSM::Gscale_t GSCALE = LSM6DSM::GFS_250DPS;
+static const  LSM6DSM::Gscale_t GSCALE = LSM6DSM::GFS_245DPS;
 static LSM6DSM::Rate_t   AODR   = LSM6DSM::ODR_833Hz;
 static LSM6DSM::Rate_t   GODR   = LSM6DSM::ODR_833Hz;
 
 // Instantiate LSM6DSM class
-static LSM6DSM lsm6dsm(Ascale, Gscale, AODR, GODR);
+static LSM6DSM lsm6dsm(ASCALE, GSCALE, AODR, GODR);
 
 static void reportAcceleration(const char * dim, float val)
 {
@@ -52,15 +52,15 @@ void setup()
     switch (lsm6dsm.begin()) {
 
         case LSM6DSM::ERROR_CONNECT:
-            error("no connection");
+            errmsg("no connection");
             break;
 
         case LSM6DSM::ERROR_ID:
-            error("bad ID");
+            errmsg("bad ID");
             break;
 
         case LSM6DSM::ERROR_SELFTEST:
-            //error("failed self-test");
+            //errmsg("failed self-test");
             break;
 
          case LSM6DSM::ERROR_NONE:
