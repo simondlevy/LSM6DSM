@@ -29,10 +29,11 @@
 // params
 static const  LSM6DSM::Ascale_t ASCALE = LSM6DSM::AFS_2G;
 static const  LSM6DSM::Gscale_t GSCALE = LSM6DSM::GFS_250DPS;
-static const  LSM6DSM::Rate_t   RATE   = LSM6DSM::ODR_208Hz;
+static LSM6DSM::Rate_t   AODR   = LSM6DSM::ODR_833Hz;
+static LSM6DSM::Rate_t   GODR   = LSM6DSM::ODR_833Hz;
 
 // Instantiate LSM6DSM class
-static LSM6DSM lsm6dsm(ASCALE, RATE, GSCALE, RATE);
+static LSM6DSM lsm6dsm(Ascale, Gscale, AODR, GODR);
 
 static void reportAcceleration(const char * dim, float val)
 {
@@ -52,13 +53,27 @@ void setup()
         exit(1);
     }
 
+    switch (lsm6dsm.begin()) {
+
+        case LSM6DSM::ERROR_CONNECT:
+            error("no connection");
+            break;
+
+        case LSM6DSM::ERROR_ID:
+            error("bad ID");
+            break;
+
+        case LSM6DSM::ERROR_SELFTEST:
+            //error("failed self-test");
+            break;
+
+         case LSM6DSM::ERROR_NONE:
+            break;
+
+    }
+
     delay(100);
 
-    if (!lsm6dsm.begin()) {
-        while (true) {
-            printf("Unable to connect to LSM6DSM\n");
-        }
-    }
 }
 
 void loop()
