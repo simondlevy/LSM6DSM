@@ -91,7 +91,7 @@ class LSM6DSM
 
         LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr);
 
-        Error_t begin(void);
+        Error_t begin(uint8_t bus=1);
 
         void calibrate(void);
 

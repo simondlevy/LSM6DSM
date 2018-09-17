@@ -48,10 +48,10 @@ LSM6DSM::LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr)
 }
 
 
-LSM6DSM::Error_t LSM6DSM::begin(void)
+LSM6DSM::Error_t LSM6DSM::begin(uint8_t bus)
 {
     // Set up cross-platform I^2C support
-    _i2c = cpi2c_open(ADDRESS);
+    _i2c = cpi2c_open(ADDRESS, bus);
 
     // Check device ID
     if (readRegister(WHO_AM_I) != ADDRESS) {
