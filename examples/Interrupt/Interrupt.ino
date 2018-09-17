@@ -135,6 +135,9 @@ void loop()
 
         Serial.println("\n");
     }
+
+    // Slow down, you move too fast
+    delay(100);
 }
 
 

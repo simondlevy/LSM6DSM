@@ -23,6 +23,8 @@
 
 #include <stdint.h>
 
+#include <CrossPlatformI2C_Core.h>
+
 // One ifdef needed to support delay() cross-platform
 #if defined(ARDUINO)
 #include <Arduino.h>
