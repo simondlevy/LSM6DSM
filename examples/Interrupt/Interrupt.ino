@@ -76,6 +76,7 @@ void setup() {
     digitalWrite(myLed, HIGH); // start with led off
 
     pinMode(LSM6DSM_intPin1, INPUT);
+    attachInterrupt(LSM6DSM_intPin1, myinthandler1, RISING);  // define interrupt for intPin2 output of LSM6DSM
 
     Wire.begin(TWI_PINS_20_21); // set master mode 
     Wire.setClock(400000); // I2C frequency at 400 kHz  
@@ -105,7 +106,9 @@ void setup() {
     //delay(4000);
     //lsm6dsm.calibrate();
 
-    attachInterrupt(LSM6DSM_intPin1, myinthandler1, RISING);  // define interrupt for intPin2 output of LSM6DSM
+    // Read once from the sensor to enable interrupts
+    float ax=0, ay=0, az=0, gx=0, gy=0, gz=0;
+    lsm6dsm.readData(ax, ay, az, gx, gy, gz);
 
     // Turn on the LED
     digitalWrite(myLed, LOW);
@@ -120,7 +123,6 @@ void loop()
         newLSM6DSMData = false;     // reset newData flag
 
         float ax=0, ay=0, az=0, gx=0, gy=0, gz=0;
-
         lsm6dsm.readData(ax, ay, az, gx, gy, gz);
 
         reportAcceleration("X", ax);
