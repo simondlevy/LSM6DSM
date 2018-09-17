@@ -1,5 +1,5 @@
 /* 
-   Basic.ino: LSM6DSM basic example
+   Polling.ino: LSM6DSM polling example
 
    Copyright (C) 2018 Simon D. Levy
 
@@ -30,16 +30,10 @@ static LSM6DSM::Rate_t   AODR   = LSM6DSM::ODR_833Hz;
 static LSM6DSM::Rate_t   GODR   = LSM6DSM::ODR_833Hz;
 
 static uint8_t myLed = 38;
-static uint8_t LSM6DSM_intPin1 = 2;  
 
 static bool newLSM6DSMData;
 
 static LSM6DSM lsm6dsm(Ascale, Gscale, AODR, GODR);
-
-static void myinthandler1()
-{
-    newLSM6DSMData = true;
-}
 
 static void error(const char * msg)
 {
@@ -75,8 +69,6 @@ void setup() {
     pinMode(myLed, OUTPUT);
     digitalWrite(myLed, HIGH); // start with led off
 
-    pinMode(LSM6DSM_intPin1, INPUT);
-
     Wire.begin(TWI_PINS_20_21); // set master mode 
     Wire.setClock(400000); // I2C frequency at 400 kHz  
     delay(1000);
@@ -105,8 +97,6 @@ void setup() {
     //delay(4000);
     //lsm6dsm.calibrate();
 
-    attachInterrupt(LSM6DSM_intPin1, myinthandler1, RISING);  // define interrupt for intPin2 output of LSM6DSM
-
     // Turn on the LED
     digitalWrite(myLed, LOW);
 
@@ -115,7 +105,7 @@ void setup() {
 void loop() 
 {
     // If intPin goes high, either all data registers have new data
-    if(newLSM6DSMData) {   // On interrupt, read data
+    if(lsm6dsm.checkNewData()) {   // On interrupt, read data
 
         newLSM6DSMData = false;     // reset newData flag
 
