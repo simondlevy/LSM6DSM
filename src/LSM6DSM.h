@@ -95,7 +95,7 @@ class LSM6DSM
 
         Error_t begin(uint8_t bus=1);
 
-        void calibrate(void);
+        void calibrate(float accelBias[3], float gyroBias[3]);
 
         bool checkNewData(void);
 

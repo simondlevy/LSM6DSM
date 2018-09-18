@@ -179,7 +179,7 @@ bool LSM6DSM::outOfRange(float val, float minval, float maxval)
     return val < minval || val > maxval;
 }
 
-void LSM6DSM::calibrate(void)
+void LSM6DSM::calibrate(float accelBias[3], float gyroBias[3])
 {
     int16_t temp[7] = {0, 0, 0, 0, 0, 0, 0};
     int32_t sum[7] = {0, 0, 0, 0, 0, 0, 0};
@@ -209,8 +209,12 @@ void LSM6DSM::calibrate(void)
     if(_accelBias[1] < -0.8f) {_accelBias[1] += 1.0f;}  // Remove gravity from the y-axis accelerometer bias calculation
     if(_accelBias[2] > 0.8f)  {_accelBias[2] -= 1.0f;}  // Remove gravity from the z-axis accelerometer bias calculation
     if(_accelBias[2] < -0.8f) {_accelBias[2] += 1.0f;}  // Remove gravity from the z-axis accelerometer bias calculation
-}
 
+    for (uint8_t k=0; k<3; ++k) {
+        accelBias[k] = _accelBias[k];
+        gyroBias[k] = _gyroBias[k];
+    }
+}
 
 void LSM6DSM::readData(int16_t * destination)
 {

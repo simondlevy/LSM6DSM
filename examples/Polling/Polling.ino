@@ -93,9 +93,21 @@ void setup() {
     }
 
     // Un-comment these lines to calibrate the IMU
-    //Serial.println("Calculate accel and gyro offset biases: keep sensor flat and motionless!");
-    //delay(4000);
-    //lsm6dsm.calibrate();
+    /*
+    Serial.println("Calculate accel and gyro offset biases: keep sensor flat and motionless!");
+    delay(2000);
+    float accelBias[3] = {0,0, 0}, gyroBias[3] = {0,0,0};
+    lsm6dsm.calibrate(accelBias, gyroBias);
+    Serial.println("accel biases (mg)");
+    Serial.println(1000.0f * accelBias[0]);
+    Serial.println(1000.0f * accelBias[1]);
+    Serial.println(1000.0f * accelBias[2]);
+    Serial.println("gyro biases (dps)");
+    Serial.println(gyroBias[0]);
+    Serial.println(gyroBias[1]);
+    Serial.println(gyroBias[2]);
+    delay(2000);
+    */
 
     // Turn on the LED
     digitalWrite(myLed, LOW);
