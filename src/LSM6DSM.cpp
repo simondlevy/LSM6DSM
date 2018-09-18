@@ -27,7 +27,7 @@
 
 #include <math.h>
 
-LSM6DSM::LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr)
+LSM6DSM::LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr, float accelBias[3], float gyroBias[3])
 {
     _ascale = ascale;
     _gscale = gscale;
@@ -42,11 +42,18 @@ LSM6DSM::LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr)
     _gRes = getRes(gscale, gvals);
 
     for (uint8_t k=0; k<3; ++k) {
-        _accelBias[k] = 0;
-        _gyroBias[k] = 0;
+        _accelBias[k] = accelBias[k];
+        _gyroBias[k] = gyroBias[k];
     }
 }
 
+LSM6DSM::LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr)
+{
+    float accelBias[3] = {0, 0, 0};
+    float gyroBias[3] = {0, 0, 0};
+
+    LSM6DSM(ascale, gscale, aodr, godr, accelBias, gyroBias);
+}
 
 LSM6DSM::Error_t LSM6DSM::begin(uint8_t bus)
 {

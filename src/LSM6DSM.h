@@ -93,6 +93,8 @@ class LSM6DSM
 
         LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr);
 
+        LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr, float accelBias[3], float gyroBias[3]);
+
         Error_t begin(uint8_t bus=1);
 
         void calibrate(float accelBias[3], float gyroBias[3]);
