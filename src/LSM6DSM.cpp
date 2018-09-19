@@ -103,6 +103,12 @@ void LSM6DSM::readData(float & ax, float & ay, float & az, float & gx, float & g
     gz = (float)data[3]*_gres - _gyroBias[2]; 
 }
 
+bool LSM6DSM::checkNewData(void)
+{
+    // use the gyro bit to check new data
+    return (bool)(readByte(ADDRESS, STATUS_REG)  & 0x02);   
+}
+
 bool LSM6DSM::selfTest()
 {
     int16_t temp[7] = {0, 0, 0, 0, 0, 0, 0};

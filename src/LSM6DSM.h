@@ -99,6 +99,8 @@ class LSM6DSM
 
         void clearInterrupt(void);
 
+        bool checkNewData(void);
+
         void readData(float & ax, float & ay, float & az, float & gx, float & gy, float & gz);
 
 
