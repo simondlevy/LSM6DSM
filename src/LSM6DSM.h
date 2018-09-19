@@ -93,7 +93,7 @@ class LSM6DSM
 
         LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr);
 
-        Error_t begin(void);
+        Error_t begin(uint8_t bus=1);
 
         void calibrate(float * gyroBias, float * accelBias);
 
@@ -239,6 +239,9 @@ http://www.st.com/content/ccc/resource/technical/document/datasheet/76/27/cf/88/
         bool outOfBounds(float val, float minval, float maxval);
 
         // I^2C business
+
+        uint8_t _i2c; // Support for wiringPi, I2CDEV
+
         void    writeRegister(uint8_t subAddress, uint8_t data);
         uint8_t readRegister(uint8_t subAddress);
         void    readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest);

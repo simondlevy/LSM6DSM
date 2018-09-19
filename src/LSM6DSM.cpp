@@ -26,8 +26,6 @@
 
 #include <math.h>
 
-#include <Wire.h>
-
 LSM6DSM::LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr, float accelBias[3], float gyroBias[3])
 {
     _ascale = ascale;
@@ -54,8 +52,10 @@ LSM6DSM::LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr)
     LSM6DSM(ascale, gscale, aodr, godr, accelBias, gyroBias);
 }
 
-LSM6DSM::Error_t LSM6DSM::begin(void)
+LSM6DSM::Error_t LSM6DSM::begin(uint8_t bus)
 {
+    _i2c = cpi2c_open(ADDRESS, bus); // Support for wiringPi, I2CDEV
+
     if (readRegister(WHO_AM_I) != 0x6A) {
         return ERROR_ID;
     }
@@ -249,14 +249,11 @@ uint8_t LSM6DSM::readRegister(uint8_t subAddress) {
 }
 
 void LSM6DSM::writeRegister(uint8_t subAddress, uint8_t data) {
-    uint8_t temp[2];
-    temp[0] = subAddress;
-    temp[1] = data;
-    Wire.transfer(ADDRESS, &temp[0], 2, NULL, 0); 
+    cpi2c_writeRegister(_i2c, subAddress, data);
 }
 
 
 
 void LSM6DSM::readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest) {
-    Wire.transfer(ADDRESS, &subAddress, 1, dest, count); 
+    cpi2c_readRegisters(_i2c, subAddress, count, dest);
 }
