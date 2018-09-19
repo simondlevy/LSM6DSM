@@ -3,7 +3,7 @@
 
    Copyright (C) 2018 Simon D. Levy
 
-   Adapted from https://github.com/kriswiner/LSM6DSM_LIS2MDL_LPS22HB
+   Adapted from https://github.com/kriswiner/LIS2MDL_LPS22HB
 
    This file is part of LSM6DSM.
 
@@ -18,14 +18,15 @@
    GNU General Public License for more details.
    You should have received a copy of the GNU General Public License
    along with LSM6DSM.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
+ */
 
 #include "LSM6DSM.h"
 
 #include <CrossPlatformI2C_Core.h>
 
 #include <math.h>
+
+#include <Wire.h>
 
 LSM6DSM::LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr, float accelBias[3], float gyroBias[3])
 {
@@ -34,12 +35,11 @@ LSM6DSM::LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr, flo
     _aodr = aodr;
     _godr = godr;
 
+    float areses[4] = {2, 16, 4, 8};
+    _ares = areses[ascale] / 32768.f;
 
-    float avals[4] = {2, 16, 4, 8};
-    _aRes = getRes(ascale, avals);
-
-    float gvals[4] = {245, 500, 1000, 2000};
-    _gRes = getRes(gscale, gvals);
+    float greses[4] = {245, 500, 1000, 2000};
+    _gres = greses[gscale] / 32768.f;
 
     for (uint8_t k=0; k<3; ++k) {
         _accelBias[k] = accelBias[k];
@@ -49,78 +49,69 @@ LSM6DSM::LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr, flo
 
 LSM6DSM::LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr)
 {
-    float accelBias[3] = {0, 0, 0};
-    float gyroBias[3] = {0, 0, 0};
-
+    float accelBias[3] = {0,0,0};
+    float gyroBias[3] = {0,0,0};
     LSM6DSM(ascale, gscale, aodr, godr, accelBias, gyroBias);
 }
 
-LSM6DSM::Error_t LSM6DSM::begin(uint8_t bus)
+LSM6DSM::Error_t LSM6DSM::begin(void)
 {
-    // Set up cross-platform I^2C support
-    _i2c = cpi2c_open(ADDRESS, bus);
-
-    // Check device ID
-    if (readRegister(WHO_AM_I) != ADDRESS) {
+    if (readByte(ADDRESS, WHO_AM_I) != 0x6A) {
         return ERROR_ID;
     }
 
-    // Reset device
-    uint8_t temp = readRegister(CTRL3_C);
-    writeRegister(CTRL3_C, temp | 0x01); // Set bit 0 to 1 to reset LSM6DSM
+    // reset device
+    uint8_t temp = readByte(ADDRESS, CTRL3_C);
+    writeByte(ADDRESS, CTRL3_C, temp | 0x01); // Set bit 0 to 1 to reset LSM6DSM
     delay(100); // Wait for all registers to reset 
+    writeByte(ADDRESS, CTRL1_XL, _aodr << 4 | _ascale << 2);
 
-    writeRegister(CTRL1_XL, _aodr << 4 | _ascale << 2);
+    writeByte(ADDRESS, CTRL2_G, _godr << 4 | _gscale << 2);
 
-    writeRegister(CTRL2_G, _godr << 4 | _gscale << 2);
+    temp = readByte(ADDRESS, CTRL3_C);
 
-    temp = readRegister(CTRL3_C);
     // enable block update (bit 6 = 1), auto-increment registers (bit 2 = 1)
-    writeRegister(CTRL3_C, temp | 0x40 | 0x04); 
+    writeByte(ADDRESS, CTRL3_C, temp | 0x40 | 0x04); 
     // by default, interrupts active HIGH, push pull, little endian data 
     // (can be changed by writing to bits 5, 4, and 1, resp to above register)
 
     // enable accel LP2 (bit 7 = 1), set LP2 tp ODR/9 (bit 6 = 1), enable input_composite (bit 3) for low noise
-    writeRegister(CTRL8_XL, 0x80 | 0x40 | 0x08 );
+    writeByte(ADDRESS, CTRL8_XL, 0x80 | 0x40 | 0x08 );
 
     // interrupt handling
-    writeRegister(DRDY_PULSE_CFG, 0x80); // latch interrupt until data read
-    writeRegister(INT1_CTRL, 0x03);      // enable  data ready interrupts on INT1
-    writeRegister(INT2_CTRL, 0x40);      // enable significant motion interrupts on INT2  
+    writeByte(ADDRESS, DRDY_PULSE_CFG, 0x80); // latch interrupt until data read
+    writeByte(ADDRESS, INT1_CTRL, 0x03);      // enable  data ready interrupts on INT1
+    writeByte(ADDRESS, INT2_CTRL, 0x40);      // enable significant motion interrupts on INT2  
 
     return selfTest() ? ERROR_NONE : ERROR_SELFTEST;
 }
 
-bool LSM6DSM::checkNewData(void)
-{
-    // use the gyro bit to check new data
-    return (bool)(readRegister(STATUS_REG)  & 0x02);   
-}
-
 void LSM6DSM::readData(float & ax, float & ay, float & az, float & gx, float & gy, float & gz)
 {
-    int16_t temp[7] = {0, 0, 0, 0, 0, 0, 0};
+    int16_t data[7];        
 
-    readData(temp);
+    readData(data); 
 
     // Calculate the accleration value into actual g's
-    ax = (float)temp[4]*_aRes - _accelBias[0];  // get actual g value, this depends on scale being set
-    ay = (float)temp[5]*_aRes - _accelBias[1];   
-    az = (float)temp[6]*_aRes - _accelBias[2];  
+    ax = (float)data[4]*_ares - _accelBias[0];  // get actual g value, this depends on scale being set
+    ay = (float)data[5]*_ares - _accelBias[1];   
+    az = (float)data[6]*_ares - _accelBias[2];  
 
     // Calculate the gyro value into actual degrees per second
-    gx = (float)temp[1]*_gRes - _gyroBias[0];  // get actual gyro value, this depends on scale being set
-    gy = (float)temp[2]*_gRes - _gyroBias[1];  
-    gz = (float)temp[3]*_gRes - _gyroBias[2]; 
+    gx = (float)data[1]*_gres - _gyroBias[0];  // get actual gyro value, this depends on scale being set
+    gy = (float)data[2]*_gres - _gyroBias[1];  
+    gz = (float)data[3]*_gres - _gyroBias[2]; 
 }
-
-
 
 bool LSM6DSM::selfTest()
 {
     int16_t temp[7] = {0, 0, 0, 0, 0, 0, 0};
-    int16_t accelPTest[3] = {0, 0, 0}, accelNTest[3] = {0, 0, 0}, gyroPTest[3] = {0, 0, 0}, gyroNTest[3] = {0, 0, 0};
-    int16_t accelNom[3] = {0, 0, 0}, gyroNom[3] = {0, 0, 0};
+    int16_t accelPTest[3] = {0, 0, 0};
+    int16_t accelNTest[3] = {0, 0, 0};
+    int16_t gyroPTest[3] = {0, 0, 0};
+    int16_t gyroNTest[3] = {0, 0, 0};
+    int16_t accelNom[3] = {0, 0, 0};
+    int16_t gyroNom[3] = {0, 0, 0};
 
     readData(temp);
     accelNom[0] = temp[4];
@@ -130,50 +121,48 @@ bool LSM6DSM::selfTest()
     gyroNom[1]  = temp[2];
     gyroNom[2]  = temp[3];
 
-    writeRegister(CTRL5_C, 0x01); // positive accel self test
+    writeByte(ADDRESS, CTRL5_C, 0x01); // positive accel self test
     delay(100); // let accel respond
     readData(temp);
     accelPTest[0] = temp[4];
     accelPTest[1] = temp[5];
     accelPTest[2] = temp[6];
 
-    writeRegister(CTRL5_C, 0x03); // negative accel self test
+    writeByte(ADDRESS, CTRL5_C, 0x03); // negative accel self test
     delay(100); // let accel respond
     readData(temp);
     accelNTest[0] = temp[4];
     accelNTest[1] = temp[5];
     accelNTest[2] = temp[6];
 
-    writeRegister(CTRL5_C, 0x04); // positive gyro self test
+    writeByte(ADDRESS, CTRL5_C, 0x04); // positive gyro self test
     delay(100); // let gyro respond
     readData(temp);
     gyroPTest[0] = temp[1];
     gyroPTest[1] = temp[2];
     gyroPTest[2] = temp[3];
 
-    writeRegister(CTRL5_C, 0x0C); // negative gyro self test
+    writeByte(ADDRESS, CTRL5_C, 0x0C); // negative gyro self test
     delay(100); // let gyro respond
     readData(temp);
     gyroNTest[0] = temp[1];
     gyroNTest[1] = temp[2];
     gyroNTest[2] = temp[3];
 
-    writeRegister(CTRL5_C, 0x00); // normal mode
+    writeByte(ADDRESS, CTRL5_C, 0x00); // normal mode
     delay(100); // let accel and gyro respond
 
     return 
-        rangeTest(accelPTest, accelNTest, accelNom, _aRes, ACCEL_MIN, ACCEL_MAX) && 
-        rangeTest(gyroPTest,  gyroNTest,  gyroNom,  _gRes, GYRO_MIN,  GYRO_MAX);
+        inBounds(accelPTest, accelNTest, accelNom, _ares, ACCEL_MIN, ACCEL_MAX) &&
+        inBounds(gyroPTest,  gyroNTest,  gyroNom,  _gres, GYRO_MIN,  GYRO_MAX);
 }
 
-bool LSM6DSM::rangeTest(int16_t ptestvals[3], int16_t ntestvals[3], int16_t nomvals[3], float res, float minval, float maxval)
+bool LSM6DSM::inBounds(int16_t ptest[3], int16_t ntest[3], int16_t nom[3], float res, float minval, float maxval)
 {
     for (uint8_t k=0; k<3; ++k) {
 
-        float pval = fabs((ptestvals[k] - nomvals[k]) * res);
-        float nval = fabs((ntestvals[k] - nomvals[k]) * res);
+        if (outOfBounds((ptest[k] - nom[k]) * res, minval, maxval) || outOfBounds((ntest[k] - nom[k]) * res, minval, maxval)) {
 
-        if (outOfRange(pval, minval, maxval) || outOfRange(nval, minval, maxval)) {
             return false;
         }
     }
@@ -181,15 +170,19 @@ bool LSM6DSM::rangeTest(int16_t ptestvals[3], int16_t ntestvals[3], int16_t nomv
     return true;
 }
 
-bool LSM6DSM::outOfRange(float val, float minval, float maxval)
+bool LSM6DSM::outOfBounds(float val, float minval, float maxval)
 {
+    val = fabs(val);
     return val < minval || val > maxval;
 }
 
-void LSM6DSM::calibrate(float accelBias[3], float gyroBias[3])
+void LSM6DSM::calibrate(float * gyroBias, float * accelBias)
 {
     int16_t temp[7] = {0, 0, 0, 0, 0, 0, 0};
     int32_t sum[7] = {0, 0, 0, 0, 0, 0, 0};
+
+    Serial.println("Calculate accel and gyro offset biases: keep sensor flat and motionless!");
+    delay(4000);
 
     for (int ii = 0; ii < 128; ii++)
     {
@@ -203,30 +196,37 @@ void LSM6DSM::calibrate(float accelBias[3], float gyroBias[3])
         delay(50);
     }
 
-    _gyroBias[0] = sum[1]*_gRes/128.0f;
-    _gyroBias[1] = sum[2]*_gRes/128.0f;
-    _gyroBias[2] = sum[3]*_gRes/128.0f;
-    _accelBias[0] = sum[4]*_aRes/128.0f;
-    _accelBias[1] = sum[5]*_aRes/128.0f;
-    _accelBias[2] = sum[6]*_aRes/128.0f;
+    gyroBias[0] = sum[1]*_gres/128.0f;
+    gyroBias[1] = sum[2]*_gres/128.0f;
+    gyroBias[2] = sum[3]*_gres/128.0f;
+    accelBias[0] = sum[4]*_ares/128.0f;
+    accelBias[1] = sum[5]*_ares/128.0f;
+    accelBias[2] = sum[6]*_ares/128.0f;
 
-    if(_accelBias[0] > 0.8f)  {_accelBias[0] -= 1.0f;}  // Remove gravity from the x-axis accelerometer bias calculation
-    if(_accelBias[0] < -0.8f) {_accelBias[0] += 1.0f;}  // Remove gravity from the x-axis accelerometer bias calculation
-    if(_accelBias[1] > 0.8f)  {_accelBias[1] -= 1.0f;}  // Remove gravity from the y-axis accelerometer bias calculation
-    if(_accelBias[1] < -0.8f) {_accelBias[1] += 1.0f;}  // Remove gravity from the y-axis accelerometer bias calculation
-    if(_accelBias[2] > 0.8f)  {_accelBias[2] -= 1.0f;}  // Remove gravity from the z-axis accelerometer bias calculation
-    if(_accelBias[2] < -0.8f) {_accelBias[2] += 1.0f;}  // Remove gravity from the z-axis accelerometer bias calculation
+    if(accelBias[0] > 0.8f)  {accelBias[0] -= 1.0f;}  // Remove gravity from the x-axis accelerometer bias calculation
+    if(accelBias[0] < -0.8f) {accelBias[0] += 1.0f;}  // Remove gravity from the x-axis accelerometer bias calculation
+    if(accelBias[1] > 0.8f)  {accelBias[1] -= 1.0f;}  // Remove gravity from the y-axis accelerometer bias calculation
+    if(accelBias[1] < -0.8f) {accelBias[1] += 1.0f;}  // Remove gravity from the y-axis accelerometer bias calculation
+    if(accelBias[2] > 0.8f)  {accelBias[2] -= 1.0f;}  // Remove gravity from the z-axis accelerometer bias calculation
+    if(accelBias[2] < -0.8f) {accelBias[2] += 1.0f;}  // Remove gravity from the z-axis accelerometer bias calculation
 
     for (uint8_t k=0; k<3; ++k) {
-        accelBias[k] = _accelBias[k];
-        gyroBias[k] = _gyroBias[k];
+        _accelBias[k] = accelBias[k];
+        _gyroBias[k] = gyroBias[k];
     }
+
 }
 
-void LSM6DSM::readData(int16_t * destination)
+void LSM6DSM::clearInterrupt(void)
+{
+    int16_t data[7];
+    readData(data);
+}
+
+void LSM6DSM::readData(int16_t destination[7])
 {
     uint8_t rawData[14];  // x/y/z accel register data stored here
-    readRegisters(OUT_TEMP_L, 14, &rawData[0]);  // Read the 14 raw data registers into data array
+    readBytes(ADDRESS, OUT_TEMP_L, 14, &rawData[0]);  // Read the 14 raw data registers into data array
     destination[0] = ((int16_t)rawData[1] << 8) | rawData[0] ;  // Turn the MSB and LSB into a signed 16-bit value
     destination[1] = ((int16_t)rawData[3] << 8) | rawData[2] ;  
     destination[2] = ((int16_t)rawData[5] << 8) | rawData[4] ; 
@@ -236,21 +236,21 @@ void LSM6DSM::readData(int16_t * destination)
     destination[6] = ((int16_t)rawData[13] << 8) | rawData[12] ; 
 }
 
-float LSM6DSM::getRes(uint8_t scale, float vals[4])
-{
-    return vals[scale] / 32768.f;
+// I2C read/write functions for the LSM6DSM
+
+void LSM6DSM::writeByte(uint8_t address, uint8_t subAddress, uint8_t data) {
+    uint8_t temp[2];
+    temp[0] = subAddress;
+    temp[1] = data;
+    Wire.transfer(address, &temp[0], 2, NULL, 0); 
 }
 
-uint8_t LSM6DSM::readRegister(uint8_t subAddress) {
-    uint8_t data;
-    readRegisters(subAddress, 1, &data);
-    return data;
+uint8_t LSM6DSM::readByte(uint8_t address, uint8_t subAddress) {
+    uint8_t temp[1];
+    Wire.transfer(address, &subAddress, 1, &temp[0], 1);
+    return temp[0];
 }
 
-void LSM6DSM::writeRegister(uint8_t subAddress, uint8_t data) {
-    cpi2c_writeRegister(_i2c, subAddress, data);
-}
-
-void LSM6DSM::readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest) {
-    cpi2c_readRegisters(_i2c, subAddress, count, dest);
+void LSM6DSM::readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t * dest) {
+    Wire.transfer(address, &subAddress, 1, dest, count); 
 }

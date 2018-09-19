@@ -29,9 +29,7 @@ static LSM6DSM::Gscale_t Gscale = LSM6DSM::GFS_245DPS;
 static LSM6DSM::Rate_t   AODR   = LSM6DSM::ODR_833Hz;
 static LSM6DSM::Rate_t   GODR   = LSM6DSM::ODR_833Hz;
 
-static uint8_t myLed = 38;
-
-static bool newLSM6DSMData;
+static uint8_t LED_PIN = 38;
 
 static LSM6DSM lsm6dsm(Ascale, Gscale, AODR, GODR);
 
@@ -66,8 +64,8 @@ void setup() {
     delay(1000);
 
     // Configure led
-    pinMode(myLed, OUTPUT);
-    digitalWrite(myLed, HIGH); // start with led off
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, HIGH); // start with led off
 
     Wire.begin(TWI_PINS_20_21); // set master mode 
     Wire.setClock(400000); // I2C frequency at 400 kHz  
@@ -84,7 +82,7 @@ void setup() {
             break;
 
         case LSM6DSM::ERROR_SELFTEST:
-            //error("failed self-test");
+            error("failed self-test");
             break;
 
          case LSM6DSM::ERROR_NONE:
@@ -110,16 +108,13 @@ void setup() {
     */
 
     // Turn on the LED
-    digitalWrite(myLed, LOW);
-
+    digitalWrite(LED_PIN, LOW);
 }
 
 void loop() 
 {
     // If intPin goes high, either all data registers have new data
     if(lsm6dsm.checkNewData()) {   // On interrupt, read data
-
-        newLSM6DSMData = false;     // reset newData flag
 
         float ax=0, ay=0, az=0, gx=0, gy=0, gz=0;
 
