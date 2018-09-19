@@ -242,7 +242,11 @@ void LSM6DSM::readData(int16_t destination[7])
     destination[6] = ((int16_t)rawData[13] << 8) | rawData[12] ; 
 }
 
-// I2C read/write functions for the LSM6DSM
+uint8_t LSM6DSM::readRegister(uint8_t subAddress) {
+    uint8_t temp;
+    readRegisters(subAddress, 1, &temp);
+    return temp;
+}
 
 void LSM6DSM::writeRegister(uint8_t subAddress, uint8_t data) {
     uint8_t temp[2];
@@ -251,11 +255,7 @@ void LSM6DSM::writeRegister(uint8_t subAddress, uint8_t data) {
     Wire.transfer(ADDRESS, &temp[0], 2, NULL, 0); 
 }
 
-uint8_t LSM6DSM::readRegister(uint8_t subAddress) {
-    uint8_t temp[1];
-    Wire.transfer(ADDRESS, &subAddress, 1, &temp[0], 1);
-    return temp[0];
-}
+
 
 void LSM6DSM::readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest) {
     Wire.transfer(ADDRESS, &subAddress, 1, dest, count); 
