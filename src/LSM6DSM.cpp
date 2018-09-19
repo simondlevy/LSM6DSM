@@ -187,9 +187,6 @@ void LSM6DSM::calibrate(float * gyroBias, float * accelBias)
     int16_t temp[7] = {0, 0, 0, 0, 0, 0, 0};
     int32_t sum[7] = {0, 0, 0, 0, 0, 0, 0};
 
-    Serial.println("Calculate accel and gyro offset biases: keep sensor flat and motionless!");
-    delay(4000);
-
     for (int ii = 0; ii < 128; ii++)
     {
         readData(temp);

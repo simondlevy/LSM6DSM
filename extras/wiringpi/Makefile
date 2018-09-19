@@ -1,5 +1,5 @@
 # 
-# Makefile for LSM6DSM WiringPi example
+# Makefile for LSM6DM WiringPi example
 #
 # Copyright (c) 2018 Simon D. Levy
 #
@@ -23,7 +23,7 @@ CPDB = $(HOME)/CrossPlatformDataBus
 
 ALL = Basic
 
-LSMSRC = ../../src
+LSM6DSMSRC = ../../src
 
 CPSRC  = $(CPDB)/src
 CPEXT  = $(CPDB)/extras
@@ -36,10 +36,10 @@ Basic: Basic.o LSM6DSM.o WiringPiI2C.o main.o errmsg.o
 	g++ -std=c++11 -o Basic Basic.o LSM6DSM.o WiringPiI2C.o main.o errmsg.o -lwiringPi
 
 Basic.o: Basic.cpp 
-	g++ -std=c++11 -Wall -I$(CPCMN) -I$(LSMSRC) -c Basic.cpp
+	g++ -std=c++11 -Wall -I$(CPCMN) -I$(CPSRC) -I$(LSM6DSMSRC) -c Basic.cpp
 
-LSM6DSM.o:  $(LSMSRC)/LSM6DSM.cpp  $(LSMSRC)/LSM6DSM.h
-	g++ -std=c++11 -Wall -I$(CPSRC) -I$(LSMSRC) -c $(LSMSRC)/LSM6DSM.cpp
+LSM6DSM.o:  $(LSM6DSMSRC)/LSM6DSM.cpp  $(LSM6DSMSRC)/LSM6DSM.h
+	g++ -std=c++11 -Wall -I$(CPSRC) -I$(LSM6DSMSRC) -c $(LSM6DSMSRC)/LSM6DSM.cpp
 
 WiringPiI2C.o: $(I2CSRC)/WiringPiI2C.cpp 
 	g++ -std=c++11 -Wall -I$(CPSRC) -c $(I2CSRC)/WiringPiI2C.cpp
@@ -48,7 +48,7 @@ main.o: $(CPCMN)/main.cpp
 	g++ -std=c++11 -Wall -c $(CPCMN)/main.cpp
 
 errmsg.o: $(CPCMN)/errmsg.cpp 
-	g++ -std=c++11 -Wall -I$(CPCMN) -c $(CPCMN)/errmsg.cpp
+	g++ -std=c++11 -Wall -c $(CPCMN)/errmsg.cpp
 
 run: Basic
 	./Basic
