@@ -56,32 +56,32 @@ LSM6DSM::LSM6DSM(Ascale_t ascale, Gscale_t gscale, Rate_t aodr, Rate_t godr)
 
 LSM6DSM::Error_t LSM6DSM::begin(void)
 {
-    if (readByte(ADDRESS, WHO_AM_I) != 0x6A) {
+    if (readRegister(WHO_AM_I) != 0x6A) {
         return ERROR_ID;
     }
 
     // reset device
-    uint8_t temp = readByte(ADDRESS, CTRL3_C);
-    writeByte(ADDRESS, CTRL3_C, temp | 0x01); // Set bit 0 to 1 to reset LSM6DSM
+    uint8_t temp = readRegister(CTRL3_C);
+    writeRegister(CTRL3_C, temp | 0x01); // Set bit 0 to 1 to reset LSM6DSM
     delay(100); // Wait for all registers to reset 
-    writeByte(ADDRESS, CTRL1_XL, _aodr << 4 | _ascale << 2);
+    writeRegister(CTRL1_XL, _aodr << 4 | _ascale << 2);
 
-    writeByte(ADDRESS, CTRL2_G, _godr << 4 | _gscale << 2);
+    writeRegister(CTRL2_G, _godr << 4 | _gscale << 2);
 
-    temp = readByte(ADDRESS, CTRL3_C);
+    temp = readRegister(CTRL3_C);
 
     // enable block update (bit 6 = 1), auto-increment registers (bit 2 = 1)
-    writeByte(ADDRESS, CTRL3_C, temp | 0x40 | 0x04); 
+    writeRegister(CTRL3_C, temp | 0x40 | 0x04); 
     // by default, interrupts active HIGH, push pull, little endian data 
     // (can be changed by writing to bits 5, 4, and 1, resp to above register)
 
     // enable accel LP2 (bit 7 = 1), set LP2 tp ODR/9 (bit 6 = 1), enable input_composite (bit 3) for low noise
-    writeByte(ADDRESS, CTRL8_XL, 0x80 | 0x40 | 0x08 );
+    writeRegister(CTRL8_XL, 0x80 | 0x40 | 0x08 );
 
     // interrupt handling
-    writeByte(ADDRESS, DRDY_PULSE_CFG, 0x80); // latch interrupt until data read
-    writeByte(ADDRESS, INT1_CTRL, 0x03);      // enable  data ready interrupts on INT1
-    writeByte(ADDRESS, INT2_CTRL, 0x40);      // enable significant motion interrupts on INT2  
+    writeRegister(DRDY_PULSE_CFG, 0x80); // latch interrupt until data read
+    writeRegister(INT1_CTRL, 0x03);      // enable  data ready interrupts on INT1
+    writeRegister(INT2_CTRL, 0x40);      // enable significant motion interrupts on INT2  
 
     return selfTest() ? ERROR_NONE : ERROR_SELFTEST;
 }
@@ -106,7 +106,7 @@ void LSM6DSM::readData(float & ax, float & ay, float & az, float & gx, float & g
 bool LSM6DSM::checkNewData(void)
 {
     // use the gyro bit to check new data
-    return (bool)(readByte(ADDRESS, STATUS_REG)  & 0x02);   
+    return (bool)(readRegister(STATUS_REG)  & 0x02);   
 }
 
 bool LSM6DSM::selfTest()
@@ -127,35 +127,35 @@ bool LSM6DSM::selfTest()
     gyroNom[1]  = temp[2];
     gyroNom[2]  = temp[3];
 
-    writeByte(ADDRESS, CTRL5_C, 0x01); // positive accel self test
+    writeRegister(CTRL5_C, 0x01); // positive accel self test
     delay(100); // let accel respond
     readData(temp);
     accelPTest[0] = temp[4];
     accelPTest[1] = temp[5];
     accelPTest[2] = temp[6];
 
-    writeByte(ADDRESS, CTRL5_C, 0x03); // negative accel self test
+    writeRegister(CTRL5_C, 0x03); // negative accel self test
     delay(100); // let accel respond
     readData(temp);
     accelNTest[0] = temp[4];
     accelNTest[1] = temp[5];
     accelNTest[2] = temp[6];
 
-    writeByte(ADDRESS, CTRL5_C, 0x04); // positive gyro self test
+    writeRegister(CTRL5_C, 0x04); // positive gyro self test
     delay(100); // let gyro respond
     readData(temp);
     gyroPTest[0] = temp[1];
     gyroPTest[1] = temp[2];
     gyroPTest[2] = temp[3];
 
-    writeByte(ADDRESS, CTRL5_C, 0x0C); // negative gyro self test
+    writeRegister(CTRL5_C, 0x0C); // negative gyro self test
     delay(100); // let gyro respond
     readData(temp);
     gyroNTest[0] = temp[1];
     gyroNTest[1] = temp[2];
     gyroNTest[2] = temp[3];
 
-    writeByte(ADDRESS, CTRL5_C, 0x00); // normal mode
+    writeRegister(CTRL5_C, 0x00); // normal mode
     delay(100); // let accel and gyro respond
 
     return 
@@ -232,7 +232,7 @@ void LSM6DSM::clearInterrupt(void)
 void LSM6DSM::readData(int16_t destination[7])
 {
     uint8_t rawData[14];  // x/y/z accel register data stored here
-    readBytes(ADDRESS, OUT_TEMP_L, 14, &rawData[0]);  // Read the 14 raw data registers into data array
+    readRegisters(OUT_TEMP_L, 14, &rawData[0]);  // Read the 14 raw data registers into data array
     destination[0] = ((int16_t)rawData[1] << 8) | rawData[0] ;  // Turn the MSB and LSB into a signed 16-bit value
     destination[1] = ((int16_t)rawData[3] << 8) | rawData[2] ;  
     destination[2] = ((int16_t)rawData[5] << 8) | rawData[4] ; 
@@ -244,19 +244,19 @@ void LSM6DSM::readData(int16_t destination[7])
 
 // I2C read/write functions for the LSM6DSM
 
-void LSM6DSM::writeByte(uint8_t address, uint8_t subAddress, uint8_t data) {
+void LSM6DSM::writeRegister(uint8_t subAddress, uint8_t data) {
     uint8_t temp[2];
     temp[0] = subAddress;
     temp[1] = data;
-    Wire.transfer(address, &temp[0], 2, NULL, 0); 
+    Wire.transfer(ADDRESS, &temp[0], 2, NULL, 0); 
 }
 
-uint8_t LSM6DSM::readByte(uint8_t address, uint8_t subAddress) {
+uint8_t LSM6DSM::readRegister(uint8_t subAddress) {
     uint8_t temp[1];
-    Wire.transfer(address, &subAddress, 1, &temp[0], 1);
+    Wire.transfer(ADDRESS, &subAddress, 1, &temp[0], 1);
     return temp[0];
 }
 
-void LSM6DSM::readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t * dest) {
-    Wire.transfer(address, &subAddress, 1, dest, count); 
+void LSM6DSM::readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest) {
+    Wire.transfer(ADDRESS, &subAddress, 1, dest, count); 
 }

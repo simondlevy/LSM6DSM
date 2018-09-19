@@ -239,8 +239,8 @@ http://www.st.com/content/ccc/resource/technical/document/datasheet/76/27/cf/88/
         bool outOfBounds(float val, float minval, float maxval);
 
         // I^2C business
-        void writeByte(uint8_t address, uint8_t subAddress, uint8_t data);
-        uint8_t readByte(uint8_t address, uint8_t subAddress);
-        void readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t * dest);
+        void    writeRegister(uint8_t subAddress, uint8_t data);
+        uint8_t readRegister(uint8_t subAddress);
+        void    readRegisters(uint8_t subAddress, uint8_t count, uint8_t * dest);
 
 };
