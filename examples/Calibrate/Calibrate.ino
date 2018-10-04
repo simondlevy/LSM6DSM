@@ -19,10 +19,7 @@
 */
 
 #include "LSM6DSM.h"
-
 #include <Wire.h>
-
-#define LED_PIN 38
 
 //LSM6DSM definitions
 #define INTERRUPT_PIN 2  // interrupt1 pin definitions, data ready
@@ -53,7 +50,7 @@ static void error(const char * errstr)
     }
 }
 
-// Real biases
+// For storing real biases
 float accel_bias[3];
 float gyro_bias[3];
 String sensor_msg;
@@ -62,16 +59,12 @@ void setup()
 {
     Serial.begin(115200);
 
-    // Configure led
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, HIGH); // start with led off
-
     // Configure interrupt
     pinMode(INTERRUPT_PIN, INPUT);
 
     // Start I^2C 
-    Wire.begin(TWI_PINS_20_21); // set master mode 
-    Wire.setClock(400000); // I2C frequency at 400 kHz  
+    Wire.begin();           // set master mode 
+    Wire.setClock(400000);  // I2C frequency at 400 kHz  
     delay(100);
 
     switch (lsm6dsm.begin()) {
@@ -81,53 +74,43 @@ void setup()
             break;
 
         case LSM6DSM::ERROR_SELFTEST:
-            //error("self-test");
+            error("self-test");
             break;
 
          default:
             break;
     }
-
-    delay(1000);
-
-    // Turn on LED
-    digitalWrite(LED_PIN, LOW);
-    
-
-    Serial.print("DO NOT move the IMU. The Calibration will start in: 3");
-    delay(1000);
-    Serial.print("\n");
-    Serial.print(", 2");
-    delay(1000);
-    Serial.print("\n");
-    Serial.print(", 1");
-    delay(1000);
-    Serial.print("\n");
-    
-    lsm6dsm.calibrate(gyro_bias, accel_bias);
-    
-    Serial.println("The IMU biases are the following:");
-    
-    for (int ii=0; ii<3; ++ii)
-    {
-      sensor_msg = "Giro. " + ii;
-      Serial.println(sensor_msg + ": ");    
-      Serial.println(gyro_bias[ii], 6);
-      Serial.print("\n");
-    }
-    
-    for (int ii=0; ii<3; ++ii)
-    {
-      sensor_msg = "Accel. " + ii ;
-      Serial.println(sensor_msg + ": ");  
-      Serial.println(accel_bias[ii], 6);
-      Serial.print("\n");
-    }
-    
 }
 
-void loop() {
-
+void loop() 
+{
+  
+  Serial.println("DO NOT move the IMU. Calibration starting in:");
+  Serial.println("3");
+  delay(1000);
+  Serial.println("2");
+  delay(1000);
+  Serial.println("1");
+  delay(1000);
+  Serial.println("Calibrating...");
+  
+  lsm6dsm.calibrate(gyro_bias, accel_bias);
+  
+  Serial.print("Gyro biases (x, y, z): ");
+  for (int ii=0; ii<3; ++ii)
+  {
+    Serial.print(gyro_bias[ii], 6);
+    Serial.print(",");
+  }
+  Serial.println();
+  
+  Serial.print("Accel biases (x, y, z): ");
+  for (int ii=0; ii<3; ++ii)
+  {
+    Serial.print(accel_bias[ii], 6);
+    Serial.print(",");
+  }
+  Serial.println();
+  Serial.println();
+  
 }
-
-
